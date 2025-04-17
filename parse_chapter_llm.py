@@ -59,7 +59,7 @@ def ask_llm_for_metadata(text: str, model_name: str = "llama3.2:latest") -> dict
     dictResponse = response.model_dump(mode="json")
     return dictResponse
 
-def parse_chapter_with_ollama(file_path: str, model_name: str = "llama3") -> dict:
+def parse_chapter_with_ollama(file_path: str, model_name: str = "llama3.2:latest") -> dict:
     path = Path(file_path)
     post = frontmatter.load(path)
 
