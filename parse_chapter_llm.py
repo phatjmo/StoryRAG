@@ -60,6 +60,18 @@ def ask_llm_for_metadata(text: str, model_name: str = "llama3.2:latest") -> dict
     return dictResponse
 
 def parse_chapter_with_ollama(file_path: str, model_name: str = "llama3.2:latest") -> dict:
+    """
+    Parse a chapter from a markdown file and extract metadata using the Ollama LLM.
+    Expects frontmatter in yaml like:
+    
+    ---
+    number: 1
+    title: Bird Brain
+    word_count: 800
+    historical_date: 2023-10-01 (optional)
+    ---
+    
+    """
     path = Path(file_path)
     post = frontmatter.load(path)
 
