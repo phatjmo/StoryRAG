@@ -1,0 +1,245 @@
+{
+  "data_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "character": {
+        "description": "A character within the story",
+        "items": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "name of the character",
+                  "type": "string"
+                },
+                "type": {
+                  "description": "type of character: Main or Narrator, Other",
+                  "type": "string"
+                },
+                "relationship": {
+                  "description": "Relationship of the character to the Narrator/Main character",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "How the character is described",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "type",
+                "relationship",
+                "description"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "location": {
+        "description": "A location or setting within the story",
+        "items": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "Name of the location",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "How the location is described",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "description"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "object": {
+        "description": "An object within the story",
+        "items": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "description": "The name of the object",
+                  "type": "string"
+                },
+                "description": {
+                  "description": "How the object is described",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "description"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      },
+      "time": {
+        "description": "What day and time of day does the chapter take place?",
+        "type": "string"
+      },
+      "external_genre": {
+        "description": "What genre best describes the action in this story",
+        "type": "string"
+      },
+      "internal_genre": {
+        "description": "What genre best describes the character arc for the main character in this story",
+        "type": "string"
+      },
+      "story_synopsis": {
+        "description": "Short description of this story as if for the back of a book cover.",
+        "type": "string"
+      },
+      "chapters": {
+        "description": "The chapters in this novel",
+        "items": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "properties": {
+                "number": {
+                  "description": "Chapter Number",
+                  "type": "number"
+                },
+                "title": {
+                  "description": "Chapter title",
+                  "type": "string"
+                },
+                "characters_on_stage": {
+                  "description": "Characters in the chapter from characters array.",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "locations": {
+                  "description": "Locations in chapter from locations array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "objects": {
+                  "description": "Objects mentioned in the chapter from the objects array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "summary": {
+                  "description": "Summary of chapter including inciting incident, turning point, climax and resolution",
+                  "type": "string"
+                },
+                "themes": {
+                  "description": "List of themes throughout the chapter",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "type": "array"
+                },
+                "start_emotion": {
+                  "description": "Emotion of main character at the beginning of the chapter",
+                  "type": "string"
+                },
+                "end_emotion": {
+                  "description": "Emotion of main character at the end of the chapter",
+                  "type": "string"
+                },
+                "scene_type": {
+                  "description": "What kind of scene was this?",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "number",
+                "title",
+                "characters_on_stage",
+                "locations",
+                "objects",
+                "summary",
+                "themes",
+                "start_emotion",
+                "end_emotion",
+                "scene_type"
+              ],
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "type": "array"
+      }
+    },
+    "required": [
+      "character",
+      "location",
+      "object",
+      "time",
+      "external_genre",
+      "internal_genre",
+      "story_synopsis",
+      "chapters"
+    ],
+    "type": "object"
+  },
+  "config": {
+    "extraction_target": "PER_DOC",
+    "extraction_mode": "FAST",
+    "system_prompt": "You are an editor analyzing this manuscript of this story for indexing. \n\nGenre Instructions:\nExternal Genre = Pick a genre or type of story that represents the elements of the external action such as Action, Horror, Society, War, Performance, Western, Crime, Thriller, etc.\nInternal Genre = Pick a genre or type of story that represents the elements of the internal change the main character goes through, such as : Worldview, Morality, Status.\n\nSummary Instructions:\n\nStory Synopsis = Summarize the global story."
+  }
+}

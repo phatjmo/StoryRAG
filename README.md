@@ -12,3 +12,21 @@ This is an experiment in parsing a story and generating a summary using a RAG (R
 ```
 python parse_chapter_llm.py ./examples/chapter1.md --output ./test.json --model deepseek-r1
 ```
+
+## Using SpaCy
+```
+### Get the model
+python -m spacy download en_core_web_sm
+
+## For the bigger model - use with --model en_core_web_trf
+python -m spacy download en_core_web_trf
+
+
+```
+
+
+## Pipeline So Far
+
+```
+docx_to_json.py | extract_entities_per_chapter.py | canonicalize_entities.py | 
+```
