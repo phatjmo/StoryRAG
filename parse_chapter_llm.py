@@ -12,7 +12,7 @@ from typing import List
 
 class ChapterMetadata(BaseModel):
     think: str = Field(
-        description="Think though how to tell a good joke about the subject"
+        description="Think through the chapter, including the main themes and character motivations."
     )
     reasoning: str = Field(
         description="Reasoning about the chapter, including the main events and character arcs."

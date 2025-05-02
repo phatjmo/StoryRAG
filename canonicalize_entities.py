@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from typing import List
 from collections import defaultdict
 from itertools import islice
+import re
 
 ENTITY_TYPE_MAP = {
     "PERSON": "Character",
@@ -77,9 +78,12 @@ Do not explain. Just return valid JSON.
 """
 
 PROMPT_TEMPLATE = """
-You are a literary assistant helping canonicalize entities across an entire novel.
+You are a literary assistant helping canonicalize entities from a novel.
 
-Given a list of extracted named entities grouped by type, identify canonical entity names and group any aliases or variations.
+Given a list of extracted named entities from a chapter, group them by meaning:
+- Choose a `canonical_name` for each entity group
+- Group any aliases or variants under `aliases`, use only the provided names, only match similar names or short forms
+- Retain the `type` (Character, Place, Item, Date, etc.)
 
 Only use the input terms exactly as provided. Do not add new entities. Do not guess or invent names.
 
@@ -106,8 +110,58 @@ def batch(iterable, size):
 
 def deduplicate_aliases(entities):
     for ent in entities:
+        if ent.get("aliases"):
+            ent["aliases"] = [
+              re.sub(r"'s\b", "", re.sub(r"[^\w\s]", "", alias.strip())) for alias in ent["aliases"]
+            ]
+            if ent["canonical_name"].strip() not in ent["aliases"]:
+                ent["aliases"].append(ent["canonical_name"].strip())
+            if len(ent["aliases"]) == 0:
+                ent["aliases"].append(ent["canonical_name"].strip())
+                continue
+            if len(ent["aliases"]) == 1:
+                continue
         ent["aliases"] = sorted(set(ent.get("aliases", [])))
     return entities
+  
+def filter_aliases_by_paragraphs(entities, chapters):
+    """
+    Filters aliases for each entity by checking if they exist in the paragraphs of each chapter.
+    
+    Args:
+        entities (list): List of entities, each containing a "type", "canonical_name", and "aliases".
+        chapters (list): List of chapters, each containing a "paragraphs" key with an array of strings.
+    
+    Returns:
+        list: Updated list of entities with filtered aliases.
+    """
+    filtered_entities = []
+    for entity in entities:
+        if len(entity["canonical_name"]) < 3:
+            print(f"[!] Skipping short canonical name '{entity['canonical_name']}' due to length.")
+            continue
+        if "aliases" in entity:
+            filtered_aliases = []
+            for alias in entity["aliases"]:
+                if len(alias) < 3:
+                    print(f"[!] Skipping short alias '{alias}' for entity '{entity['canonical_name']}' due to length.")
+                    continue
+                alias_found = any(
+                    alias in paragraph for chapter in chapters for paragraph in chapter.get("paragraphs", [])
+                )
+                if alias_found:
+                    print(f"[✓] Found alias '{alias}' in paragraphs.")
+                    filtered_aliases.append(alias)
+
+            if len(filtered_aliases) == 0:
+              print(f"[!] No aliases remaining for entity '{entity['canonical_name']}', leaving out.")
+            else:
+              entity["aliases"] = filtered_aliases
+              filtered_entities.append(entity)
+              
+        else:
+            print(f"[!] No aliases found for entity '{entity['canonical_name']}'")     
+    return filtered_entities
 
 def assign_ids(canonical_entities):
     counts = defaultdict(int)
@@ -149,16 +203,16 @@ def canonicalize_entities_ollama(global_entities: dict, model="llama3.2", batch_
       print(f"[+] Processing {etype} ({len(aliases)} values)...")
       for chunk in batch(aliases, batch_size):
         entity_input = f"{etype}: {', '.join(chunk)}"
-        print(f"[LLM] Canonicalizing {entity_input}")
+        # print(f"[LLM] Canonicalizing {entity_input}")
         full_prompt = prompt.format(entity_input=entity_input, format_instructions=parser.get_format_instructions())
         structured_llm = llm.with_structured_output(EntitiesList, method="json_schema")
         response = structured_llm.invoke(full_prompt)
         dict_response = response.model_dump(mode="json")
         results.extend(dict_response["entities"])
-    print(f"[LLM] Canonicalized {len(results)} entities")
+    # print(f"[LLM] Canonicalized {len(results)} entities")
     merged = {}
     for ent in results:
-        print(ent)
+        # print(ent)
         key = (ent["type"].lower(), ent["canonical_name"].lower())
         if key not in merged:
             merged[key] = ent
@@ -178,13 +232,15 @@ def main():
     
     global_entities = collect_global_entities(chapters)
     canonical = canonicalize_entities_ollama(global_entities, model=args.model, batch_size=10)
-    print(canonical)
-    enriched = assign_ids(canonical)   
+    # print(canonical)
+    enriched = assign_ids(canonical)
+    deduped_enriched = deduplicate_aliases(enriched)   
+    filtered = filter_aliases_by_paragraphs(deduped_enriched, chapters)
     
     for ch in data["chapters"]:
       del ch["entities"]    
       
-    data["global_entities"] = enriched
+    data["global_entities"] = filtered
     
     if args.output:
         Path(args.output).write_text(json.dumps(data, indent=2), encoding="utf-8")
